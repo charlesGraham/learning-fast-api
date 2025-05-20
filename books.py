@@ -2,6 +2,15 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-@app.get("/api")
-async def hello_world():
-    return {"message": "Hello World"}
+
+BOOKS = [
+    {"title": "Title One", "author": "Author One"},
+    {"title": "Title Two", "author": "Author Two"},
+    {"title": "Title Three", "author": "Author Three"},
+    {"title": "Title Four", "author": "Author Four"},
+    {"title": "Title Five", "author": "Author Five"},
+]
+
+@app.get("/api/books")
+async def get_books():
+    return BOOKS
