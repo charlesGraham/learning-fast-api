@@ -24,15 +24,6 @@ class BookCreate(BaseModel):
   category: str
 
 
-# BOOKS = [
-#     {"id": 1, "title": "Title One", "author": "Author One", "category": "Science"},
-#     {"id": 2, "title": "Title Two", "author": "Author Two", "category": "Science"},
-#     {"id": 3, "title": "Title Three", "author": "Author Three", "category": "History"},
-#     {"id": 4, "title": "Title Four", "author": "Author Four", "category": "Math"},
-#     {"id": 5, "title": "Title Five", "author": "Author Five", "category": "Math"},
-#     {"id": 6, "title": "Title Six", "author": "Author Two", "category": "Math"}
-# ]
-
 @api_router.get("/books", response_model=list[BookSchema])
 async def get_books(db: Session = Depends(database.get_db)):
     return db.query(models.Book).all()
