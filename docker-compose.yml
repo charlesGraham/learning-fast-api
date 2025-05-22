@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 services:
   db:
     image: postgres:14
@@ -7,23 +7,28 @@ services:
     env_file:
       - ./.env
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=books_db
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_DB=${DATABASE_NAME}
     ports:
       - '5432:5432'
-
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
   web:
     build: .
-    command: uvicorn app.main:app --host 0.0.0.0 --reload
+    command: uvicorn books:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - .:/app
+      - .:/code
     ports:
       - '8000:8000'
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file:
       - ./.env
-
 volumes:
   postgres_data:
