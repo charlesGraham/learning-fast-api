@@ -25,11 +25,9 @@ This FastAPI application provides a RESTful API for managing a book collection. 
 
 ```
 fast_api/
-├── app/
-│   ├── __init__.py
-│   ├── models.py         # SQLAlchemy models
-│   ├── database.py       # Database connection and session management
-│   └── books.py          # FastAPI routes for book operations
+├── books.py              # FastAPI routes for book operations
+├── database.py           # Database connection and session management
+├── models.py             # SQLAlchemy models
 ├── docker-compose.yml    # Docker Compose configuration
 ├── Dockerfile            # Docker configuration for the web service
 ├── .env                  # Environment variables (not in version control)
@@ -55,47 +53,41 @@ fast_api/
 ### Prerequisites
 
 - Python 3.12 or newer
-- PostgreSQL (local installation or Docker)
-- Docker and Docker Compose (optional, for containerized deployment)
+- Docker and Docker Compose
 
 ### Environment Variables
 
 Create a `.env` file in the project root with the following variables:
 
 ```
-DATABASE_USER=postgres
-DATABASE_PASSWORD=your_password
-DATABASE_HOST=localhost
+# Set up your own PostgreSQL environment with these values
+DATABASE_USER=your_db
+DATABASE_PASSWORD=your_db_password
+DATABASE_HOST=db         # Use 'db' for Docker, 'localhost' for local development
 DATABASE_PORT=5432
-DATABASE_NAME=books_db
+DATABASE_NAME=your_db_name
 ```
 
-For Docker deployment, add these variables:
+For Docker deployment, these variables are used by both the web and db services. The `db` service uses them to initialize the database, and the `web` service uses them to connect to the database.
 
-```
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_password
-POSTGRES_DB=books_db
-```
-
-### Installation Steps
+### Installation Steps (Local Development)
 
 1. Clone the repository
 2. Create a virtual environment:
    ```bash
-   python -m venv learnfastapi
-   source learnfastapi/bin/activate  # Linux/Mac
+   python -m venv venv
+   source venv/bin/activate  # Linux/Mac
    # or
-   learnfastapi\Scripts\activate  # Windows
+   venv\Scripts\activate  # Windows
    ```
 3. Install dependencies:
    ```bash
-   pip install fastapi uvicorn sqlalchemy psycopg2-binary alembic python-dotenv
+   pip install -r requirements.txt
    ```
 
 ## Database Setup
 
-### Option 1: Manual Setup
+### Option 1: Manual Setup (Local Development)
 
 1. Create a PostgreSQL database:
 
@@ -110,31 +102,31 @@ POSTGRES_DB=books_db
 
 ### Option 2: Using Alembic Migrations
 
-1. Initialize Alembic:
-
+1. Initialize Alembic (if not already initialized):
    ```bash
    alembic init alembic
    ```
-
-2. Edit `alembic/env.py` to import your models and set up the database URL
-
+2. Edit `alembic/env.py` to import your models and set up the database URL.
 3. Create and apply migrations:
    ```bash
    alembic revision --autogenerate -m "Initial migration"
    alembic upgrade head
    ```
 
-### Option 3: Docker Setup
+### Option 3: Docker Setup (Recommended for Development/Production)
 
-1. Start the PostgreSQL container:
-
+1. Start all services:
    ```bash
-   docker-compose up -d db
+   docker-compose up -d
    ```
-
-2. Run migrations from the web container:
+2. Wait for the database to be healthy (Docker Compose healthcheck is configured).
+3. Run migrations from the web container:
    ```bash
    docker-compose exec web alembic upgrade head
+   ```
+   Or, to initialize the database tables directly (not recommended for production):
+   ```bash
+   docker-compose exec web python init_db.py
    ```
 
 ## API Endpoints
@@ -176,7 +168,7 @@ curl -X GET http://localhost:8000/api/books/1
 ```bash
 curl -X POST http://localhost:8000/api/books \
   -H "Content-Type: application/json" \
-  -d '{"id": 7, "title": "New Book", "author": "New Author", "category": "Fiction"}'
+  -d '{"title": "New Book", "author": "New Author", "category": "Fiction"}'
 ```
 
 #### Update a book
@@ -184,7 +176,7 @@ curl -X POST http://localhost:8000/api/books \
 ```bash
 curl -X PUT http://localhost:8000/api/books/1 \
   -H "Content-Type: application/json" \
-  -d '{"id": 1, "title": "Updated Title", "author": "Author One", "category": "Science"}'
+  -d '{"title": "Updated Title", "author": "Author One", "category": "Science"}'
 ```
 
 #### Delete a book
@@ -206,14 +198,15 @@ Visit http://localhost:8000/docs for interactive Swagger documentation.
 ### Docker Deployment
 
 1. Start all services:
-
    ```bash
    docker-compose up -d
    ```
-
 2. Access the API at http://localhost:8000
-
-3. Stop services:
+3. Run migrations (recommended):
+   ```bash
+   docker-compose exec web alembic upgrade head
+   ```
+4. Stop services:
    ```bash
    docker-compose down
    ```
